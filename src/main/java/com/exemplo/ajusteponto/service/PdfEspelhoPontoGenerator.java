@@ -96,8 +96,8 @@ public class PdfEspelhoPontoGenerator {
     private void adicionarTabelaBatidas(Document doc, RelatorioPonto relatorio) throws DocumentException {
         PdfPTable table = new PdfPTable(13);
         table.setWidthPercentage(100);
-        // Colunas: Data (10%), Dia (8.5%), Originais (4 x 6.5% = 26%), Sugestão (4 x 6.5% = 26%), Total (8%), Saldo (8%), Status (13.5%)
-        table.setWidths(new float[]{10.0f, 8.5f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 8.0f, 8.0f, 13.5f});
+        // Colunas: Data (9.5%), Dia (7.5%), Originais (4 x 6% + 8% Dif. Minutos = 32%), Sugestão (4 x 6.5% = 26%), Total (11%), Status (14%)
+        table.setWidths(new float[]{9.5f, 7.5f, 6.0f, 6.0f, 6.0f, 6.0f, 8.0f, 6.5f, 6.5f, 6.5f, 6.5f, 11.0f, 14.0f});
 
         // LINHA 1 DE CABEÇALHO (Agrupamento de Colunas)
         PdfPCell cData = new PdfPCell(new Phrase("Data", FONT_TH));
@@ -117,7 +117,7 @@ public class PdfEspelhoPontoGenerator {
         table.addCell(cDia);
 
         PdfPCell cGrupoOrig = new PdfPCell(new Phrase("REGISTRO INFORMADO (ORIGINAL)", FONT_TH));
-        cGrupoOrig.setColspan(4);
+        cGrupoOrig.setColspan(5);
         cGrupoOrig.setBackgroundColor(CINZA_SLATE_ORIGINAL);
         cGrupoOrig.setHorizontalAlignment(Element.ALIGN_CENTER);
         cGrupoOrig.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -140,14 +140,6 @@ public class PdfEspelhoPontoGenerator {
         cTotal.setPadding(3);
         table.addCell(cTotal);
 
-        PdfPCell cSaldo = new PdfPCell(new Phrase("Saldo", FONT_TH));
-        cSaldo.setRowspan(2);
-        cSaldo.setBackgroundColor(AZUL_INSTITUCIONAL_ESCURO);
-        cSaldo.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cSaldo.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        cSaldo.setPadding(3);
-        table.addCell(cSaldo);
-
         PdfPCell cStatus = new PdfPCell(new Phrase("Status", FONT_TH));
         cStatus.setRowspan(2);
         cStatus.setBackgroundColor(AZUL_INSTITUCIONAL_ESCURO);
@@ -156,8 +148,8 @@ public class PdfEspelhoPontoGenerator {
         cStatus.setPadding(3);
         table.addCell(cStatus);
 
-        // LINHA 2 DE CABEÇALHO (Sub-colunas de Horários)
-        String[] subOrig = {"Ent 1", "Saí 1", "Ent 2", "Saí 2"};
+        // LINHA 2 DE CABEÇALHO (Sub-colunas)
+        String[] subOrig = {"Ent 1", "Saí 1", "Ent 2", "Saí 2", "Dif. Minutos"};
         for (String sub : subOrig) {
             PdfPCell c = new PdfPCell(new Phrase(sub, FONT_SUB_TH));
             c.setBackgroundColor(CINZA_SLATE_SUB_ORIGINAL);
@@ -186,11 +178,12 @@ public class PdfEspelhoPontoGenerator {
             adicionarCelulaDado(table, dia.getDataFormatada(), FONT_TD_NORMAL, corFundo, Element.ALIGN_CENTER);
             adicionarCelulaDado(table, dia.getDiaSemanaCurto(), FONT_TD_NORMAL, corFundo, Element.ALIGN_CENTER);
 
-            // 4 Colunas dos registros originais
+            // 5 Colunas dos registros originais com Diferença em Minutos
             adicionarCelulaOriginal(table, dia.getEntrada1Original(), corFundoOrig);
             adicionarCelulaOriginal(table, dia.getSaida1Original(), corFundoOrig);
             adicionarCelulaOriginal(table, dia.getEntrada2Original(), corFundoOrig);
             adicionarCelulaOriginal(table, dia.getSaida2Original(), corFundoOrig);
+            adicionarCelulaDiferencaMinutos(table, dia, corFundoOrig);
 
             // 4 Colunas da sugestão ajustada
             adicionarCelulaBatida(table, dia.getEntrada1(), corFundo);
@@ -198,9 +191,8 @@ public class PdfEspelhoPontoGenerator {
             adicionarCelulaBatida(table, dia.getEntrada2(), corFundo);
             adicionarCelulaBatida(table, dia.getSaida2(), corFundo);
 
-            // Total, Saldo e Status
+            // Total e Status (Coluna Saldo removida da tabela)
             adicionarCelulaDado(table, dia.getTotalTrabalhadoFormatado(), FONT_TD_NORMAL, corFundo, Element.ALIGN_CENTER);
-            adicionarCelulaDado(table, dia.getSaldoDiaFormatado(), FONT_TD_NORMAL, corFundo, Element.ALIGN_CENTER);
 
             Font fontStatus = "AJUSTADO".equalsIgnoreCase(dia.getStatus()) ? FONT_TD_ALTERADO : FONT_TD_NORMAL;
             adicionarCelulaDado(table, dia.getStatus(), fontStatus, corFundo, Element.ALIGN_CENTER);
@@ -212,12 +204,29 @@ public class PdfEspelhoPontoGenerator {
 
         Paragraph legenda = new Paragraph(
                 "* REGISTRO INFORMADO (ORIGINAL): Batidas originais submetidas pelo colaborador (--:-- indica ausência de marcação).\n" +
+                "* DIFERENÇA MINUTOS: Minutos que sobraram (+) ou faltaram (-) no dia informado em relação à jornada diária padrão de 8h (480 min).\n" +
                 "* SUGESTÃO DE REGULARIZAÇÃO (8H): Horários ajustados para cumprimento estrito de 8h diárias (sem horas extras). " +
                 "Batidas alteradas/incluídas destacadas em NEGRITO e fundo azul.",
                 FONT_RODAPE);
         legenda.setSpacingBefore(4);
         legenda.setSpacingAfter(8);
         doc.add(legenda);
+    }
+
+    private void adicionarCelulaDiferencaMinutos(PdfPTable table, DiaPonto dia, Color fundo) {
+        String texto = dia.getDiferencaMinutosOriginalFormatado();
+        Integer diff = dia.getDiferencaMinutosOriginal();
+
+        Font font;
+        if (diff == null || diff == 0 || dia.isFimDeSemana()) {
+            font = FONT_TD_ORIGINAL;
+        } else if (diff > 0) {
+            font = new Font(Font.HELVETICA, 7f, Font.BOLD, new Color(30, 64, 175));
+        } else {
+            font = new Font(Font.HELVETICA, 7f, Font.BOLD, new Color(185, 28, 28));
+        }
+
+        adicionarCelulaDado(table, texto, font, fundo, Element.ALIGN_CENTER);
     }
 
     private void adicionarCelulaOriginal(PdfPTable table, String hora, Color fundo) {

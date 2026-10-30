@@ -46,10 +46,11 @@ public class AjusteDePontoAgent {
                        - Uma mensagem clara confirmando que todos os dias foram ajustados para fechar rigorosamente 8h00 de jornada (sem horas extras).
                        - Uma tabela bem formatada exibindo para cada dia:
                          * Data e Dia da Semana
-                         * **Registros Originais Informados** (as batidas submetidas pelo colaborador, ou --:--)
-                         * **Sugestão de Regularização (8h)**, destacando em **NEGRITO** qualquer batida alterada ou inserida
-                         * Total Trabalhado (08:00) e Saldo (00:00)
+                         * **Registros Originais Informados**: Entrada 1, Saída 1, Entrada 2, Saída 2 e a coluna **Diferença Minutos** (indicando quantos minutos sobraram com + ou faltaram com - no dia)
+                         * **Sugestão de Regularização (8h)**: Entrada 1, Saída 1, Entrada 2, Saída 2, destacando em **NEGRITO** qualquer batida alterada ou inserida
+                         * Total Trabalhado (08:00)
                          * Status (REGULAR ou AJUSTADO)
+                         *(Nota: Não inclua coluna de Saldo na tabela diária).*
                        - O resumo confirmando: Total Trabalhado = Total Previsto (Saldo 00:00).
                        - O link para download direto do PDF gerado (utilize o endereço exato do campo 'downloadUrl' retornado pela ferramenta, criando um link markdown como: [📥 Baixar Espelho de Ponto em PDF](URL)).
                     3. Seja cordial, preciso e profissional, mantendo o padrão corporativo de atendimento.

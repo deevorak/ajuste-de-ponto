@@ -33,27 +33,30 @@ public class RegulamentoPontoTest {
         // Dia 1: Faltou saída 2 -> ajustada para 17:00 (4h + 4h = 8h00)
         DiaPonto d1 = relatorio.getDias().get(0);
         Assertions.assertEquals("08:00", d1.getTotalTrabalhadoFormatado(), "Dia 1 deve ter exatamente 8h00");
-        Assertions.assertEquals("00:00", d1.getSaldoDiaFormatado(), "Saldo do Dia 1 deve ser 00:00");
         Assertions.assertEquals("17:00", d1.getSaida2().formatado());
         Assertions.assertTrue(d1.getSaida2().isFoiAlterado(), "Saída do dia 1 deve estar em negrito");
         Assertions.assertEquals("08:00", d1.getEntrada1Original(), "Entrada 1 original deve ser 08:00");
         Assertions.assertEquals("--:--", d1.getSaida2Original(), "Saída 2 original ausente deve ser --:--");
+        Assertions.assertEquals(Integer.valueOf(-240), d1.getDiferencaMinutosOriginal(), "Faltaram 240 minutos no dia 1");
+        Assertions.assertEquals("-240 min", d1.getDiferencaMinutosOriginalFormatado());
 
         // Dia 2: Teve 1h30 a mais (18:30) -> Saída 2 DEVE ser alterada para 17:00 para fechar exatamente 8h00
         DiaPonto d2 = relatorio.getDias().get(1);
         Assertions.assertEquals("08:00", d2.getTotalTrabalhadoFormatado(), "Dia 2 NÃO pode ter horas extras; deve fechar exatamente 8h00");
-        Assertions.assertEquals("00:00", d2.getSaldoDiaFormatado(), "Saldo do Dia 2 deve ser rigorosamente 00:00");
         Assertions.assertEquals("17:00", d2.getSaida2().formatado(), "Saída 2 deve ter sido reduzida para 17:00");
         Assertions.assertTrue(d2.getSaida2().isFoiAlterado(), "Saída do dia 2 alterada deve estar marcada para negrito");
         Assertions.assertEquals("18:30", d2.getSaida2Original(), "Saída 2 original informada deve ser 18:30");
+        Assertions.assertEquals(Integer.valueOf(90), d2.getDiferencaMinutosOriginal(), "Sobraram 90 minutos no dia 2");
+        Assertions.assertEquals("+90 min", d2.getDiferencaMinutosOriginalFormatado());
 
         // Dia 3: Entrada 08:30 às 12:00 (3h30). Para fechar 8h00, o 2º turno deve ser de 4h30 (13:00 às 17:30)
         DiaPonto d3 = relatorio.getDias().get(2);
         Assertions.assertEquals("08:00", d3.getTotalTrabalhadoFormatado(), "Dia 3 deve fechar exatamente 8h00");
-        Assertions.assertEquals("00:00", d3.getSaldoDiaFormatado(), "Saldo do Dia 3 deve ser 00:00");
         Assertions.assertEquals("17:30", d3.getSaida2().formatado(), "Saída 2 deve ser estendida para 17:30 para fechar 8h00");
         Assertions.assertTrue(d3.getSaida2().isFoiAlterado(), "Saída do dia 3 alterada deve estar marcada para negrito");
         Assertions.assertEquals("16:30", d3.getSaida2Original(), "Saída 2 original informada deve ser 16:30");
+        Assertions.assertEquals(Integer.valueOf(-60), d3.getDiferencaMinutosOriginal(), "Faltaram 60 minutos no dia 3");
+        Assertions.assertEquals("-60 min", d3.getDiferencaMinutosOriginalFormatado());
 
         // Saldo total do período DEVE ser exatamente 00:00 (sem horas extras)
         Assertions.assertEquals("24:00", relatorio.getTotalTrabalhadoFormatado());

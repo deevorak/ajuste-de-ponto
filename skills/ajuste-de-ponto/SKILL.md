@@ -62,9 +62,9 @@ O arquivo PDF é focado exclusivamente nos dados de auditoria e ajuste de ponto,
 1. **Tabela Comparativa de Registros**:
    - Cabeçalho em dois níveis com agrupamento claro:
      * `Data` e `Dia` da semana.
-     * **REGISTRO INFORMADO (ORIGINAL)**: 4 colunas (`Ent 1`, `Saí 1`, `Ent 2`, `Saí 2`) exibindo exatamente o que o funcionário registrou (ou `--:--` quando ausente).
+     * **REGISTRO INFORMADO (ORIGINAL)**: 5 colunas (`Ent 1`, `Saí 1`, `Ent 2`, `Saí 2` e **`Diferença Minutos`** indicando quantos minutos sobraram com sinal de + ou faltaram com sinal de - em relação a 8h/480 min).
      * **SUGESTÃO DE REGULARIZAÇÃO (8H)**: 4 colunas (`Ent 1`, `Saí 1`, `Ent 2`, `Saí 2`) exibindo a proposta de ajuste estrito em 8h diárias, com **todas as batidas alteradas ou incluídas destacadas em NEGRITO e fundo azul suave**.
-     * `Total Trabalhado` (**08:00**), `Saldo do Dia` (**00:00**) e `Status` (`REGULAR` ou `AJUSTADO`).
+     * `Total Trabalhado` (**08:00**) e `Status` (`REGULAR` ou `AJUSTADO`). Coluna de saldo removida da tabela.
 2. **Legenda**:
    - Descrição sucinta dos registros originais e das alterações em negrito.
 3. **Quadro Resumo**:

@@ -46,8 +46,11 @@ public class PontoTools {
             orig.put("saida1", dia.getSaida1Original());
             orig.put("entrada2", dia.getEntrada2Original());
             orig.put("saida2", dia.getSaida2Original());
+            orig.put("diferencaMinutos", dia.getDiferencaMinutosOriginalFormatado());
+            orig.put("diferencaMinutosValor", String.valueOf(dia.getDiferencaMinutosOriginal()));
             orig.put("formatado", dia.getOriginalFormatado());
             mDia.put("original", orig);
+            mDia.put("diferencaMinutosOriginal", dia.getDiferencaMinutosOriginalFormatado());
 
             // Sugestão de batidas ajustadas para 8h estritas
             Map<String, Object> sug = new LinkedHashMap<>();

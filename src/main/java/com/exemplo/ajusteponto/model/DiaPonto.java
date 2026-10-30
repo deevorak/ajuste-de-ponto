@@ -21,6 +21,7 @@ public class DiaPonto {
     private String saida1Original;
     private String entrada2Original;
     private String saida2Original;
+    private Integer diferencaMinutosOriginal; // Minutos que sobraram (+) ou faltaram (-) em relação a 8h (480min)
 
     // Registros ajustados/sugeridos pelo agente para cumprir o regulamento
     private RegistroBatida entrada1;
@@ -47,7 +48,43 @@ public class DiaPonto {
         this.entrada2Original = (entrada2 != null && entrada2.getHorario() != null) ? entrada2.formatado() : "--:--";
         this.saida2Original = (saida2 != null && saida2.getHorario() != null) ? saida2.formatado() : "--:--";
 
+        calcularDiferencaOriginal(entrada1, saida1, entrada2, saida2);
         calcularTotais();
+    }
+
+    public void calcularDiferencaOriginal(RegistroBatida eb1, RegistroBatida sb1, RegistroBatida eb2, RegistroBatida sb2) {
+        if (isFimDeSemana()) {
+            this.diferencaMinutosOriginal = 0;
+            return;
+        }
+
+        java.time.LocalTime hE1 = eb1 != null ? eb1.getHorario() : null;
+        java.time.LocalTime hS1 = sb1 != null ? sb1.getHorario() : null;
+        java.time.LocalTime hE2 = eb2 != null ? eb2.getHorario() : null;
+        java.time.LocalTime hS2 = sb2 != null ? sb2.getHorario() : null;
+
+        if (hE1 == null && hS1 == null && hE2 == null && hS2 == null) {
+            this.diferencaMinutosOriginal = -480;
+            return;
+        }
+
+        long minutosTrabalhados = 0;
+
+        if (hE1 != null && hS1 != null) {
+            minutosTrabalhados += Duration.between(hE1, hS1).toMinutes();
+        }
+        if (hE2 != null && hS2 != null) {
+            minutosTrabalhados += Duration.between(hE2, hS2).toMinutes();
+        }
+
+        // Se informou apenas 2 batidas (início e fim) sem intervalo de almoço explícito
+        if (hE1 != null && hS2 != null && hS1 == null && hE2 == null) {
+            long totalBruto = Duration.between(hE1, hS2).toMinutes();
+            // Desconta 60 minutos de almoço padrão
+            minutosTrabalhados = Math.max(0, totalBruto - 60);
+        }
+
+        this.diferencaMinutosOriginal = (int) (minutosTrabalhados - 480);
     }
 
     public void calcularTotais() {
@@ -228,6 +265,26 @@ public class DiaPonto {
                 saida1 != null ? saida1.formatado() : "--:--",
                 entrada2 != null ? entrada2.formatado() : "--:--",
                 saida2 != null ? saida2.formatado() : "--:--");
+    }
+
+    public Integer getDiferencaMinutosOriginal() {
+        return diferencaMinutosOriginal;
+    }
+
+    public void setDiferencaMinutosOriginal(Integer diferencaMinutosOriginal) {
+        this.diferencaMinutosOriginal = diferencaMinutosOriginal;
+    }
+
+    public String getDiferencaMinutosOriginalFormatado() {
+        if (isFimDeSemana()) return "-";
+        if (diferencaMinutosOriginal == null) return "0 min";
+        if (diferencaMinutosOriginal > 0) {
+            return "+" + diferencaMinutosOriginal + " min";
+        } else if (diferencaMinutosOriginal < 0) {
+            return diferencaMinutosOriginal + " min";
+        } else {
+            return "0 min";
+        }
     }
 
     public String getDiaSemanaCurto() {
