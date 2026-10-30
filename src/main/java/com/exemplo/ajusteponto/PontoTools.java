@@ -94,10 +94,9 @@ public class PontoTools {
         return resposta;
     }
 
-    @Schema(description = "Consulta o regulamento oficial de horário flexível (Divisão de Recursos Humanos - DRH).")
+    @Schema(description = "Consulta o regulamento oficial de horário flexível.")
     public static Map<String, Object> consultarRegrasHorarioFlexivel() {
         Map<String, Object> regras = new LinkedHashMap<>();
-        regras.put("orgao", "Divisão de Recursos Humanos (DRH)");
         regras.put("regime", "Compensação diária das horas trabalhadas (8 horas diárias / 40 horas semanais)");
         regras.put("horarioFlexivelEntrada", "07:00 às 09:00");
         regras.put("horarioNucleoMatutino", "09:00 às 11:30 (Presença obrigatória - sem compensação)");

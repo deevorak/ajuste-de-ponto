@@ -11,7 +11,7 @@ Este documento estabelece as regras de negócio, limites de jornada, heurística
 
 ## 1. Regulamento de Horário Flexível e Diretriz Estrita de 8h
 
-Baseado nas diretrizes da **Divisão de Recursos Humanos – DRH**:
+Diretrizes institucionais do regime de compensação diária:
 
 ### 1.1 Regra Fundamental de Jornada
 - **NÃO HÁ POSSIBILIDADE DE HORAS EXTRAS NEM DE BANCO DE HORAS RESIDUAL.**
@@ -57,19 +57,16 @@ A jornada diária é dividida em faixas flexíveis e faixas de presença obrigat
 
 ## 3. Especificação do Arquivo PDF de Saída
 
-1. **Cabeçalho**:
-   - Identificação da Instituição: **EMPRESA PÚBLICA DE TECNOLOGIA DA INFORMAÇÃO**.
-   - Subtítulo: **Divisão de Recursos Humanos - DRH | Espelho de Ponto Ajustado (Horário Flexível)**.
-   - Dados do Colaborador: Nome, Matrícula, Período de Referência, Carga Horária (8h diárias / 40h semanais).
-2. **Tabela Comparativa de Registros**:
+O arquivo PDF é focado exclusivamente nos dados de auditoria e ajuste de ponto, sem cabeçalho institucional, sem declaração e sem bloco de assinaturas:
+
+1. **Tabela Comparativa de Registros**:
    - Cabeçalho em dois níveis com agrupamento claro:
      * `Data` e `Dia` da semana.
      * **REGISTRO INFORMADO (ORIGINAL)**: 4 colunas (`Ent 1`, `Saí 1`, `Ent 2`, `Saí 2`) exibindo exatamente o que o funcionário registrou (ou `--:--` quando ausente).
      * **SUGESTÃO DE REGULARIZAÇÃO (8H)**: 4 colunas (`Ent 1`, `Saí 1`, `Ent 2`, `Saí 2`) exibindo a proposta de ajuste estrito em 8h diárias, com **todas as batidas alteradas ou incluídas destacadas em NEGRITO e fundo azul suave**.
      * `Total Trabalhado` (**08:00**), `Saldo do Dia` (**00:00**) e `Status` (`REGULAR` ou `AJUSTADO`).
+2. **Legenda**:
+   - Descrição sucinta dos registros originais e das alterações em negrito.
 3. **Quadro Resumo**:
    - Total Trabalhado = Total Esperado (Saldo Final: 00:00).
    - Contador de dias com ajustes realizados.
-4. **Assinaturas**:
-   - Termo formal com declaração de ciência dos registros originais e da sugestão regularizada.
-   - Campos para **Assinatura do Colaborador** e **Assinatura do Gestor Imediato (Chefia / DRH)**.

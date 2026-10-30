@@ -32,10 +32,6 @@ public class PdfEspelhoPontoGenerator {
     private static final Color DESTAQUE_AJUSTE_TEXTO = new Color(15, 23, 42);       // #0F172A
 
     // Fontes
-    private static final Font FONT_TITULO = new Font(Font.HELVETICA, 12, Font.BOLD, AZUL_INSTITUCIONAL_ESCURO);
-    private static final Font FONT_SUBTITULO = new Font(Font.HELVETICA, 8.5f, Font.BOLD, AZUL_INSTITUCIONAL_MEDIO);
-    private static final Font FONT_METADADOS_LABEL = new Font(Font.HELVETICA, 7.5f, Font.BOLD, Color.BLACK);
-    private static final Font FONT_METADADOS_VAL = new Font(Font.HELVETICA, 7.5f, Font.NORMAL, Color.DARK_GRAY);
     private static final Font FONT_TH = new Font(Font.HELVETICA, 7.5f, Font.BOLD, Color.WHITE);
     private static final Font FONT_SUB_TH = new Font(Font.HELVETICA, 6.5f, Font.BOLD, Color.WHITE);
     private static final Font FONT_TD_NORMAL = new Font(Font.HELVETICA, 7f, Font.NORMAL, Color.DARK_GRAY);
@@ -72,17 +68,11 @@ public class PdfEspelhoPontoGenerator {
             PdfWriter.getInstance(doc, baos);
             doc.open();
 
-            // 1. Cabeçalho Institucional
-            adicionarCabecalho(doc, relatorio);
-
-            // 2. Tabela de Registros com destaques em negrito
+            // 1. Tabela de Registros (originais e sugestão de regularização em 8h)
             adicionarTabelaBatidas(doc, relatorio);
 
-            // 3. Quadro Resumo e Totalizadores
+            // 2. Quadro Resumo e Totalizadores
             adicionarQuadroResumo(doc, relatorio);
-
-            // 4. Termo de Ciência e Assinaturas
-            adicionarBlocoAssinaturas(doc);
 
             doc.close();
 
@@ -101,44 +91,6 @@ public class PdfEspelhoPontoGenerator {
         } catch (Exception e) {
             throw new RuntimeException("Erro ao gerar o PDF do espelho de ponto: " + e.getMessage(), e);
         }
-    }
-
-    private void adicionarCabecalho(Document doc, RelatorioPonto relatorio) throws DocumentException {
-        Paragraph pTitulo = new Paragraph("EMPRESA PÚBLICA DE TECNOLOGIA DA INFORMAÇÃO", FONT_TITULO);
-        pTitulo.setAlignment(Element.ALIGN_CENTER);
-        doc.add(pTitulo);
-
-        Paragraph pSub = new Paragraph("Divisão de Recursos Humanos - DRH | Espelho de Ponto Ajustado (Horário Flexível)", FONT_SUBTITULO);
-        pSub.setAlignment(Element.ALIGN_CENTER);
-        pSub.setSpacingAfter(8);
-        doc.add(pSub);
-
-        PdfPTable metaTable = new PdfPTable(4);
-        metaTable.setWidthPercentage(100);
-        metaTable.setWidths(new float[]{18, 32, 20, 30});
-        metaTable.setSpacingAfter(10);
-
-        adicionarCelulaMeta(metaTable, "Colaborador:", relatorio.getNomeFuncionario());
-        adicionarCelulaMeta(metaTable, "Matrícula:", relatorio.getMatricula());
-        adicionarCelulaMeta(metaTable, "Período:", relatorio.getPeriodo());
-        adicionarCelulaMeta(metaTable, "Carga Horária:", "8h diárias / 40h semanais");
-        adicionarCelulaMeta(metaTable, "Protocolo:", relatorio.getProtocolo());
-        adicionarCelulaMeta(metaTable, "Regime:", "Horário Flexível com Compensação Diária");
-
-        doc.add(metaTable);
-    }
-
-    private void adicionarCelulaMeta(PdfPTable table, String rotulo, String valor) {
-        PdfPCell cRotulo = new PdfPCell(new Phrase(rotulo, FONT_METADADOS_LABEL));
-        cRotulo.setBackgroundColor(CINZA_CABECALHO);
-        cRotulo.setBorderColor(Color.LIGHT_GRAY);
-        cRotulo.setPadding(4);
-        table.addCell(cRotulo);
-
-        PdfPCell cValor = new PdfPCell(new Phrase(valor, FONT_METADADOS_VAL));
-        cValor.setBorderColor(Color.LIGHT_GRAY);
-        cValor.setPadding(4);
-        table.addCell(cValor);
     }
 
     private void adicionarTabelaBatidas(Document doc, RelatorioPonto relatorio) throws DocumentException {
@@ -329,39 +281,5 @@ public class PdfEspelhoPontoGenerator {
         c.addElement(pValor);
 
         table.addCell(c);
-    }
-
-    private void adicionarBlocoAssinaturas(Document doc) throws DocumentException {
-        Paragraph termo = new Paragraph(
-                "Declaro para os devidos fins que conferi os registros originais informados e estou ciente da proposta de regularização " +
-                        "de jornada acima descrita, confirmando a adequação aos limites do Regulamento de Horário Flexível vigente (DRH).",
-                new Font(Font.HELVETICA, 7.5f, Font.ITALIC, Color.DARK_GRAY));
-        termo.setAlignment(Element.ALIGN_JUSTIFIED);
-        termo.setSpacingAfter(18);
-        doc.add(termo);
-
-        PdfPTable assinaturas = new PdfPTable(2);
-        assinaturas.setWidthPercentage(100);
-        assinaturas.setWidths(new float[]{50, 50});
-
-        PdfPCell cColab = new PdfPCell();
-        cColab.setBorder(Rectangle.NO_BORDER);
-        cColab.setHorizontalAlignment(Element.ALIGN_CENTER);
-        Paragraph p1 = new Paragraph("_________________________________________\nAssinatura do Colaborador",
-                new Font(Font.HELVETICA, 8, Font.BOLD, Color.DARK_GRAY));
-        p1.setAlignment(Element.ALIGN_CENTER);
-        cColab.addElement(p1);
-        assinaturas.addCell(cColab);
-
-        PdfPCell cGestor = new PdfPCell();
-        cGestor.setBorder(Rectangle.NO_BORDER);
-        cGestor.setHorizontalAlignment(Element.ALIGN_CENTER);
-        Paragraph p2 = new Paragraph("_________________________________________\nGestor Imediato (Chefia / DRH)",
-                new Font(Font.HELVETICA, 8, Font.BOLD, Color.DARK_GRAY));
-        p2.setAlignment(Element.ALIGN_CENTER);
-        cGestor.addElement(p2);
-        assinaturas.addCell(cGestor);
-
-        doc.add(assinaturas);
     }
 }

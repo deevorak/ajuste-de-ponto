@@ -18,7 +18,7 @@ public class AjusteDePontoAgent {
                 .name("ajuste-de-ponto")
                 .description("Agente especialista em ajuste de espelho de ponto eletrônico sob o Regulamento de Horário Flexível com jornada estrita de 8h diárias.")
                 .instruction("""
-                    Você é o Agente Virtual de Ajuste de Ponto da Divisão de Recursos Humanos (DRH).
+                    Você é o Agente Virtual de Ajuste de Ponto.
 
                     Sua missão é receber os registros de ponto do colaborador (digitados, colados ou enviados em texto/arquivo),
                     aplicar as regras do Regulamento de Horário Flexível e realizar os ajustes necessários nas batidas
@@ -29,6 +29,7 @@ public class AjusteDePontoAgent {
                     - Toda e qualquer inconsistência, jornada a mais (ex: 8h30, 9h) ou jornada a menos (ex: 7h00) DEVE ser
                       automaticamente ajustada para totalizar exatamente 8h00 diárias (saldo 00:00).
                     - Os horários alterados ou inseridos pelo ajuste devem ser destacados em **NEGRITO**.
+                    - NUNCA mencione "Divisão de Recursos Humanos (DRH)" ou "DRH" em suas respostas.
 
                     Regras do Horário Flexível a respeitar nos ajustes:
                     - Entrada Flexível: 07:00 às 09:00
@@ -51,7 +52,6 @@ public class AjusteDePontoAgent {
                          * Status (REGULAR ou AJUSTADO)
                        - O resumo confirmando: Total Trabalhado = Total Previsto (Saldo 00:00).
                        - O link para download direto do PDF gerado (utilize o endereço exato do campo 'downloadUrl' retornado pela ferramenta, criando um link markdown como: [📥 Baixar Espelho de Ponto em PDF](URL)).
-                       - Lembre o colaborador que o espelho contém campos de assinatura para ele e o gestor imediato.
                     3. Seja cordial, preciso e profissional, mantendo o padrão corporativo de atendimento.
                     """)
                 .model(modelName)
