@@ -1,6 +1,6 @@
 ---
 name: ajuste-de-ponto
-description: Agente de ajuste e auditoria de registros de ponto eletrônico sob o Regulamento de Horário Flexível, com geração de espelho de ponto em PDF com destaques em negrito.
+description: Agente de ajuste e auditoria de registros de ponto eletrônico sob o Regulamento de Horário Flexível, com fechamento estrito em 8h diárias (sem horas extras) e geração de espelho em PDF com alterações em negrito.
 ---
 
 # Regulamento e Diretrizes do Agente Ajuste de Ponto
@@ -9,14 +9,15 @@ Este documento estabelece as regras de negócio, limites de jornada, heurística
 
 ---
 
-## 1. Regulamento de Horário Flexível da Empresa
+## 1. Regulamento de Horário Flexível e Diretriz Estrita de 8h
 
 Baseado nas diretrizes da **Divisão de Recursos Humanos – DRH**:
 
-### 1.1 Premissas Gerais
-- O regime vigente é o da **compensação diária das horas trabalhadas**.
-- O colaborador deve cumprir integralmente a sua jornada de trabalho dentro do próprio dia.
-- **Jornada padrão de trabalho**: **8 horas diárias (40 horas semanais)**.
+### 1.1 Regra Fundamental de Jornada
+- **NÃO HÁ POSSIBILIDADE DE HORAS EXTRAS NEM DE BANCO DE HORAS RESIDUAL.**
+- O colaborador deve cumprir **estritamente e exatamente 8 horas diárias (480 minutos)** em cada dia útil trabalhado (40 horas semanais).
+- Qualquer marcação original que resulte em saldo positivo (ex: 8h30, 9h) ou negativo (ex: 7h00) **deve ser alterada** pelo agente para fechar impreterivelmente em 8h00 exatas (saldo 00:00).
+- Todos os horários modificados ou incluídos para atingir essa meta devem ser destacados **EM NEGRITO** no espelho de ponto em PDF.
 
 ### 1.2 Faixas de Horário e Horário Núcleo
 A jornada diária é dividida em faixas flexíveis e faixas de presença obrigatória (Horário Núcleo):
@@ -34,50 +35,37 @@ A jornada diária é dividida em faixas flexíveis e faixas de presença obrigat
 - **Jornada máxima por turno de trabalho**: **05 horas**.
 - **Intervalo mínimo para almoço**: **30 minutos**.
 - **Intervalo máximo para almoço**: **02 horas e 30 minutos**.
-- Qualquer ausência dentro do **Horário Núcleo** é considerada falta/atraso e não pode ser compensada sem atestado/justificativa legal.
+- Presença nos turnos obrigatórios da manhã (09:00–11:30) e da tarde (14:00–17:00) deve ser sempre preservada.
 
 ---
 
 ## 2. Heurística de Ajuste Automático de Ponto
 
-Quando o funcionário submeter seus registros (via texto ou upload de arquivo) e houver inconsistências:
-
-1. **Batidas Faltantes**:
-   - Se faltar batida de saída/retorno do almoço: inferir intervalo padrão de 1 hora dentro da faixa flexível (ex: 12:00 às 13:00 ou conforme o início do almoço), respeitando o mínimo de 30 minutos e máximo de 2h30.
-   - Se faltar batida de início ou término do expediente: ajustar nas janelas flexíveis (07:00–09:00 e 17:00–19:00) para completar exatamente a jornada de 8h00 diárias, respeitando os turnos entre 3h e 5h.
-2. **Cálculo de Horas e Compensação**:
-   - Garantir que cada turno tenha no mínimo 3h e no máximo 5h.
-   - Horas trabalhadas no dia = (Saída 1 - Entrada 1) + (Saída 2 - Entrada 2).
-   - Meta diária = 8h00.
-3. **Identificação de Alterações**:
-   - Qualquer batida que foi incluída, alterada ou retificada deve receber uma flag de auditoria (`alterado = true`).
-   - Essa identificação é essencial para renderizar o horário **em negrito** no espelho PDF.
+1. **Eliminação de Horas Extras e Débitos**:
+   - Para qualquer dia informado, calcula a soma do Turno 1 (Saída 1 - Entrada 1) e Turno 2 (Saída 2 - Entrada 2).
+   - O horário de Saída 2 é recalculado matematicamente como:
+     `Saida2 = Entrada2 + (480 minutos - Turno 1)`.
+   - Se o colaborador bateu a saída às 18:30 mas com isso fez 9h00, a saída é ajustada para 17:30 (fechando 8h00 exatas).
+   - Se o colaborador saiu antes (ex: 16:30), a saída é ajustada para 17:00 (respeitando o horário núcleo e completando 8h00).
+2. **Batidas Faltantes**:
+   - Almoço ausente: insere saída às 12:00 e retorno às 13:00 (1h de almoço).
+   - Saída 2 ausente: calculada para fechar exatamente 8h00.
+3. **Auditoria e Destaque**:
+   - Cada batida ajustada recebe a flag `alterado = true`, sendo impressa **em negrito** no PDF para ciência e conferência do colaborador e do gestor.
 
 ---
 
 ## 3. Especificação do Arquivo PDF de Saída
 
-O arquivo gerado deve ser profissional, de fácil leitura e com a identidade visual institucional:
-
 1. **Cabeçalho**:
    - Identificação da Instituição: **EMPRESA PÚBLICA DE TECNOLOGIA DA INFORMAÇÃO**.
    - Subtítulo: **Divisão de Recursos Humanos - DRH | Espelho de Ponto Ajustado (Horário Flexível)**.
-   - Dados do Colaborador: Nome, Matrícula, Mês/Período de Referência, Carga Horária (8h diárias / 40h semanais).
+   - Dados do Colaborador: Nome, Matrícula, Período de Referência, Carga Horária (8h diárias / 40h semanais).
 2. **Tabela de Registros**:
-   - Colunas: `Data`, `Dia da Semana`, `Entrada 1`, `Saída 1 (Almoço)`, `Entrada 2 (Retorno)`, `Saída 2`, `Total Dia`, `Saldo`, `Status / Obs`.
-   - **Regra visual**: Qualquer horário inserido ou modificado pelo ajuste deve ser exibido **EM NEGRITO** (destacado na tabela).
-3. **Quadro Resumo / Totalizadores**:
-   - Total de Horas Trabalhadas.
-   - Total de Horas Previstas.
-   - Saldo do Período (positivo, neutro ou negativo).
-4. **Campo de Assinatura**:
-   - Linha de termo de ciência e responsabilidade.
-   - Campos de assinatura: **Assinatura do Colaborador** e **Assinatura do Gestor Imediato**.
-
----
-
-## 4. Mecanismo de Entrega e Download
-
-1. O agente retorna no chat o sumário das correções aplicadas.
-2. O PDF gerado é codificado em **Base64** e disponibilizado com link direto para download no navegador (`data:application/pdf;base64,...`).
-3. O endpoint HTTP `/api/ponto/download/{id}` também fica disponível no servidor web integrado para download via browser ou curl.
+   - Colunas: `Data`, `Dia`, `Entrada 1`, `Saída Alm.`, `Ret. Alm.`, `Saída 2`, `Total`, `Saldo`, `Status`.
+   - **Horários ajustados em NEGRITO com fundo destacado**.
+   - Todos os dias trabalhados apresentam **Total: 08:00** e **Saldo: +00:00**.
+3. **Quadro Resumo**:
+   - Total Trabalhado = Total Esperado (Saldo Final: 00:00).
+4. **Assinaturas**:
+   - Termo formal com campos para **Assinatura do Colaborador** e **Assinatura do Gestor Imediato**.

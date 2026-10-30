@@ -14,7 +14,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Motor de regras do Regulamento de Horário Flexível e ajuste automático de inconsistências no espelho de ponto.
+ * Motor de regras do Regulamento de Horário Flexível.
+ * Garante rigorosamente que cada dia trabalhado feche em EXATAMENTE 8 horas (480 minutos),
+ * sem horas extras e sem débitos, respeitando as faixas de horário núcleo e limites legais.
  */
 public class RegulamentoPontoEngine {
 
@@ -33,7 +35,7 @@ public class RegulamentoPontoEngine {
     public static final LocalTime SAIDA_FLEXIVEL_INICIO = LocalTime.of(17, 0);
     public static final LocalTime SAIDA_FLEXIVEL_FIM = LocalTime.of(19, 0);
 
-    public static final int JORNADA_PADRAO_MINUTOS = 480; // 8 horas
+    public static final int JORNADA_PADRAO_MINUTOS = 480; // Rigorosamente 8 horas
     public static final int TURNO_MINIMO_MINUTOS = 180;    // 3 horas
     public static final int TURNO_MAXIMO_MINUTOS = 300;    // 5 horas
     public static final int ALMOCO_MINIMO_MINUTOS = 30;    // 30 minutos
@@ -43,7 +45,7 @@ public class RegulamentoPontoEngine {
     private static final Pattern PATTERN_DATA = Pattern.compile("(\\d{4}-\\d{2}-\\d{2})|(\\d{2}/\\d{2}/\\d{4})|(\\d{2}/\\d{2})");
 
     /**
-     * Processa texto bruto ou conteúdo de arquivo e aplica o ajuste de acordo com as regras de horário flexível.
+     * Processa texto bruto ou conteúdo de arquivo e aplica o ajuste estrito de 8h diárias.
      */
     public RelatorioPonto processarEAjustar(String textoEntrada, String matricula, String nomeFuncionario) {
         String mat = (matricula != null && !matricula.isBlank()) ? matricula : "MAT-" + (10000 + new Random().nextInt(90000));
@@ -68,7 +70,8 @@ public class RegulamentoPontoEngine {
     }
 
     /**
-     * Aplica o regulamento de horário flexível e ajusta automaticamente batidas faltantes ou jornada incompleta.
+     * Aplica o regulamento e ajusta os registros para fechar RIGOROSAMENTE 8h00 diárias,
+     * eliminando qualquer possibilidade de hora extra ou déficit.
      */
     public void ajustarDiaRegulamento(DiaPonto dia) {
         if (dia.isFimDeSemana()) {
@@ -81,115 +84,109 @@ public class RegulamentoPontoEngine {
         LocalTime e2 = dia.getEntrada2() != null ? dia.getEntrada2().getHorario() : null;
         LocalTime s2 = dia.getSaida2() != null ? dia.getSaida2().getHorario() : null;
 
-        // Caso 1: Dia totalmente sem registros
+        // Se o dia está completamente vazio
         if (e1 == null && s1 == null && e2 == null && s2 == null) {
             dia.setEntrada1(RegistroBatida.ajustado(LocalTime.of(8, 0), "Inclusão automática 1º turno"));
             dia.setSaida1(RegistroBatida.ajustado(LocalTime.of(12, 0), "Inclusão automática almoço"));
             dia.setEntrada2(RegistroBatida.ajustado(LocalTime.of(13, 0), "Inclusão automática retorno almoço"));
             dia.setSaida2(RegistroBatida.ajustado(LocalTime.of(17, 0), "Inclusão automática término expediente"));
-            dia.setObservacao("Todas as batidas foram inseridas automaticamente para cumprir a jornada regular de 8h.");
+            dia.setObservacao("Batidas inseridas para cumprir exatamente 8h00 de jornada.");
             dia.calcularTotais();
             return;
         }
 
-        // Caso 2: Somente 2 batidas informadas (início e término geral, sem almoço)
-        if (e1 != null && s1 == null && e2 == null && s2 != null) {
-            dia.setSaida1(RegistroBatida.ajustado(LocalTime.of(12, 0), "Inclusão de saída para almoço (mínimo 30m / máx 2h30)"));
-            dia.setEntrada2(RegistroBatida.ajustado(LocalTime.of(13, 0), "Inclusão de retorno de almoço"));
-            s1 = dia.getSaida1().getHorario();
-            e2 = dia.getEntrada2().getHorario();
-        }
-
-        // Caso 3: Falta batida de entrada 1
+        // 1. Validação e ajuste de Entrada 1 (e1)
         if (e1 == null) {
             if (s1 != null) {
                 LocalTime calcE1 = s1.minusHours(4);
                 if (calcE1.isBefore(ENTRADA_FLEXIVEL_INICIO)) calcE1 = ENTRADA_FLEXIVEL_INICIO;
-                dia.setEntrada1(RegistroBatida.ajustado(calcE1, "Inclusão de batida de início de turno"));
+                dia.setEntrada1(RegistroBatida.ajustado(calcE1, "Inclusão de entrada"));
             } else {
-                dia.setEntrada1(RegistroBatida.ajustado(LocalTime.of(8, 0), "Inclusão de batida de início de turno"));
+                dia.setEntrada1(RegistroBatida.ajustado(LocalTime.of(8, 0), "Inclusão de entrada"));
             }
+            e1 = dia.getEntrada1().getHorario();
+        } else if (e1.isBefore(ENTRADA_FLEXIVEL_INICIO)) {
+            dia.setEntrada1(RegistroBatida.ajustado(ENTRADA_FLEXIVEL_INICIO, "Entrada antecipada ajustada para o início da faixa flexível (07:00)"));
+            e1 = dia.getEntrada1().getHorario();
+        } else if (e1.isAfter(HORARIO_NUCLEO_1_INICIO)) {
+            dia.setEntrada1(RegistroBatida.ajustado(HORARIO_NUCLEO_1_INICIO, "Entrada ajustada para o limite do horário núcleo (09:00)"));
             e1 = dia.getEntrada1().getHorario();
         }
 
-        // Caso 4: Falta intervalo de almoço (saída 1 ou entrada 2)
-        if (s1 == null && e2 != null) {
-            LocalTime calcAlmoco = e2.minusHours(1);
-            if (calcAlmoco.isBefore(ALMOCO_FLEXIVEL_INICIO)) calcAlmoco = ALMOCO_FLEXIVEL_INICIO;
-            dia.setSaida1(RegistroBatida.ajustado(calcAlmoco, "Inclusão de saída de almoço"));
+        // 2. Validação e ajuste de Saída 1 (s1 - almoço início)
+        if (s1 == null) {
+            LocalTime calcS1 = e1.plusHours(4);
+            if (calcS1.isBefore(ALMOCO_FLEXIVEL_INICIO)) calcS1 = ALMOCO_FLEXIVEL_INICIO;
+            if (calcS1.isAfter(ALMOCO_FLEXIVEL_FIM)) calcS1 = ALMOCO_FLEXIVEL_FIM;
+            dia.setSaida1(RegistroBatida.ajustado(calcS1, "Inclusão de saída de almoço"));
             s1 = dia.getSaida1().getHorario();
-        } else if (s1 != null && e2 == null) {
-            LocalTime calcRetorno = s1.plusHours(1);
-            if (calcRetorno.isAfter(ALMOCO_FLEXIVEL_FIM)) calcRetorno = ALMOCO_FLEXIVEL_FIM;
-            dia.setEntrada2(RegistroBatida.ajustado(calcRetorno, "Inclusão de retorno de almoço"));
+        } else if (s1.isBefore(HORARIO_NUCLEO_1_FIM)) {
+            dia.setSaida1(RegistroBatida.ajustado(HORARIO_NUCLEO_1_FIM, "Saída ajustada para respeitar término do horário núcleo matutino (11:30)"));
+            s1 = dia.getSaida1().getHorario();
+        } else if (s1.isAfter(ALMOCO_FLEXIVEL_FIM)) {
+            dia.setSaida1(RegistroBatida.ajustado(ALMOCO_FLEXIVEL_FIM, "Saída para almoço ajustada para o limite máximo (14:00)"));
+            s1 = dia.getSaida1().getHorario();
+        }
+
+        // 3. Validação e ajuste de Entrada 2 (e2 - retorno almoço)
+        if (e2 == null) {
+            LocalTime calcE2 = s1.plusHours(1);
+            if (calcE2.isAfter(HORARIO_NUCLEO_2_INICIO)) calcE2 = HORARIO_NUCLEO_2_INICIO;
+            dia.setEntrada2(RegistroBatida.ajustado(calcE2, "Inclusão de retorno de almoço"));
             e2 = dia.getEntrada2().getHorario();
-        } else if (s1 == null && e2 == null) {
-            dia.setSaida1(RegistroBatida.ajustado(LocalTime.of(12, 0), "Inclusão automática almoço"));
-            dia.setEntrada2(RegistroBatida.ajustado(LocalTime.of(13, 0), "Inclusão automática retorno almoço"));
-            s1 = dia.getSaida1().getHorario();
+        } else if (e2.isAfter(HORARIO_NUCLEO_2_INICIO)) {
+            dia.setEntrada2(RegistroBatida.ajustado(HORARIO_NUCLEO_2_INICIO, "Retorno de almoço ajustado para o início do horário núcleo vespertino (14:00)"));
             e2 = dia.getEntrada2().getHorario();
         }
 
-        // Valida limites do intervalo de almoço (mínimo 30m, máximo 2h30)
+        // Validação da duração do almoço (30min a 150min)
         long duracaoAlmoco = Duration.between(s1, e2).toMinutes();
         if (duracaoAlmoco < ALMOCO_MINIMO_MINUTOS) {
             dia.setEntrada2(RegistroBatida.ajustado(s1.plusMinutes(ALMOCO_MINIMO_MINUTOS),
-                    "Ajuste para respeitar intervalo mínimo de almoço de 30 minutos"));
+                    "Retorno ajustado para cumprir intervalo mínimo de 30 minutos de almoço"));
             e2 = dia.getEntrada2().getHorario();
         } else if (duracaoAlmoco > ALMOCO_MAXIMO_MINUTOS) {
             dia.setEntrada2(RegistroBatida.ajustado(s1.plusMinutes(ALMOCO_MAXIMO_MINUTOS),
-                    "Ajuste para respeitar intervalo máximo de almoço de 2h30"));
+                    "Retorno ajustado para cumprir intervalo máximo de 2h30 de almoço"));
             e2 = dia.getEntrada2().getHorario();
         }
 
-        // Caso 5: Falta batida de saída final (saída 2) ou jornada diária incompleta
+        // 4. Garantia estrita de 8h00 (480 minutos) diárias
+        // Turno 2 obrigatório até às 17:00 (horário núcleo vespertino)
+        long minAteFimNucleo2 = Duration.between(e2, HORARIO_NUCLEO_2_FIM).toMinutes();
+        long turno2Minimo = Math.max(TURNO_MINIMO_MINUTOS, minAteFimNucleo2);
+
+        // Se Turno 1 atual deixaria o Turno 2 abaixo do mínimo legal ou do horário núcleo:
         long minutosTurno1 = Duration.between(e1, s1).toMinutes();
-
-        if (s2 == null) {
-            long minutosNecessariosTurno2 = JORNADA_PADRAO_MINUTOS - minutosTurno1;
-            if (minutosNecessariosTurno2 < TURNO_MINIMO_MINUTOS) minutosNecessariosTurno2 = TURNO_MINIMO_MINUTOS;
-            if (minutosNecessariosTurno2 > TURNO_MAXIMO_MINUTOS) minutosNecessariosTurno2 = TURNO_MAXIMO_MINUTOS;
-
-            LocalTime calcSaida2 = e2.plusMinutes(minutosNecessariosTurno2);
-            if (calcSaida2.isBefore(HORARIO_NUCLEO_2_FIM)) {
-                calcSaida2 = HORARIO_NUCLEO_2_FIM;
+        if (minutosTurno1 > JORNADA_PADRAO_MINUTOS - turno2Minimo) {
+            long novoT1 = JORNADA_PADRAO_MINUTOS - turno2Minimo;
+            LocalTime novoE1 = s1.minusMinutes(novoT1);
+            if (novoE1.isBefore(ENTRADA_FLEXIVEL_INICIO)) {
+                novoE1 = ENTRADA_FLEXIVEL_INICIO;
+                s1 = novoE1.plusMinutes(novoT1);
+                dia.setSaida1(RegistroBatida.ajustado(s1, "Ajuste de horário de almoço para fechar 8h00"));
             }
-            if (calcSaida2.isAfter(SAIDA_FLEXIVEL_FIM)) {
-                calcSaida2 = SAIDA_FLEXIVEL_FIM;
-            }
-
-            dia.setSaida2(RegistroBatida.ajustado(calcSaida2, "Inclusão automática para completar 8h diárias"));
-            s2 = dia.getSaida2().getHorario();
-        } else {
-            long totalMinutosAtual = minutosTurno1 + Duration.between(e2, s2).toMinutes();
-            long diferenca = JORNADA_PADRAO_MINUTOS - totalMinutosAtual;
-
-            if (diferenca > 0 && diferenca <= 120) {
-                LocalTime novaSaida2 = s2.plusMinutes(diferenca);
-                if (!novaSaida2.isAfter(SAIDA_FLEXIVEL_FIM)) {
-                    dia.setSaida2(RegistroBatida.ajustado(novaSaida2,
-                            "Ajuste de saída no horário flexível para integralizar compensação de 8h diárias"));
-                }
-            }
+            dia.setEntrada1(RegistroBatida.ajustado(novoE1, "Entrada ajustada para viabilizar jornada exata de 8h00 sem horas extras"));
+            e1 = dia.getEntrada1().getHorario();
+            minutosTurno1 = Duration.between(e1, s1).toMinutes();
+        } else if (minutosTurno1 < TURNO_MINIMO_MINUTOS) {
+            dia.setEntrada1(RegistroBatida.ajustado(s1.minusMinutes(TURNO_MINIMO_MINUTOS),
+                    "Entrada ajustada para respeitar o turno mínimo de 3 horas"));
+            e1 = dia.getEntrada1().getHorario();
+            minutosTurno1 = Duration.between(e1, s1).toMinutes();
         }
 
-        // Validação final de horário núcleo obrigatório (09:00-11:30 e 14:00-17:00)
-        List<String> avisos = new ArrayList<>();
-        if (e1.isAfter(HORARIO_NUCLEO_1_INICIO)) {
-            avisos.add("Entrada após 09:00 viola horário núcleo matutino.");
-        }
-        if (s1.isBefore(HORARIO_NUCLEO_1_FIM)) {
-            avisos.add("Saída de almoço antes das 11:30 viola horário núcleo matutino.");
-        }
-        if (e2.isAfter(HORARIO_NUCLEO_2_INICIO)) {
-            avisos.add("Retorno de almoço após as 14:00 viola horário núcleo vespertino.");
-        }
-        if (dia.getSaida2().getHorario().isBefore(HORARIO_NUCLEO_2_FIM)) {
-            avisos.add("Saída antes das 17:00 viola horário núcleo vespertino.");
-        }
+        // Calcula a Saída 2 EXATA para que a soma feche rigorosamente 480 minutos (8h00)
+        long minutosNecessariosTurno2 = JORNADA_PADRAO_MINUTOS - minutosTurno1;
+        LocalTime saida2Ideal = e2.plusMinutes(minutosNecessariosTurno2);
 
-        if (!avisos.isEmpty()) {
-            dia.setObservacao(String.join(" ", avisos));
+        // Se a saída 2 original não existia ou difere da saída ideal, altera para a ideal
+        if (s2 == null || !s2.equals(saida2Ideal)) {
+            String motivo = (s2 == null)
+                    ? "Inclusão de saída calculada para fechar exatamente 8h00 de jornada"
+                    : "Horário de saída ajustado de " + s2 + " para " + saida2Ideal + " para fechar rigorosamente 8h00 (sem horas extras)";
+
+            dia.setSaida2(RegistroBatida.ajustado(saida2Ideal, motivo));
         }
 
         dia.calcularTotais();
@@ -313,7 +310,7 @@ public class RegulamentoPontoEngine {
                         RegistroBatida.original("08:00"),
                         RegistroBatida.original("12:00"),
                         RegistroBatida.original("13:00"),
-                        RegistroBatida.original("16:30")));
+                        RegistroBatida.original("18:30"))); // Original com hora extra
             } else if (i % 4 == 2) {
                 lista.add(new DiaPonto(dia,
                         RegistroBatida.original("08:30"),
