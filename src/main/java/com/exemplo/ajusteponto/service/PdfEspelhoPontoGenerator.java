@@ -25,7 +25,6 @@ public class PdfEspelhoPontoGenerator {
     private static final Color CINZA_SLATE_ORIGINAL = new Color(71, 85, 105);       // #475569 (Header original)
     private static final Color CINZA_SLATE_SUB_ORIGINAL = new Color(100, 116, 139); // #64748B (Sub-header original)
     private static final Color AZUL_SUB_SUGESTAO = new Color(37, 99, 235);          // #2563EB (Sub-header sugestão)
-    private static final Color CINZA_CABECALHO = new Color(237, 242, 247);          // #EDF2F7
     private static final Color CINZA_LINHA_PAR = new Color(248, 250, 252);          // #F8FAFC
     private static final Color FUNDO_ORIGINAL_PAR = new Color(241, 245, 249);       // #F1F5F9
     private static final Color DESTAQUE_AJUSTE_BG = new Color(224, 242, 254);       // #E0F2FE (Azul claro destaque)
