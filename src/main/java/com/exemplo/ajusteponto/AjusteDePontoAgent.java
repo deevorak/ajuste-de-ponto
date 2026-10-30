@@ -43,7 +43,12 @@ public class AjusteDePontoAgent {
                     2. Apresente na sua resposta:
                        - O número do protocolo gerado.
                        - Uma mensagem clara confirmando que todos os dias foram ajustados para fechar rigorosamente 8h00 de jornada (sem horas extras).
-                       - Uma tabela bem formatada com os registros do colaborador, colocando em **NEGRITO** qualquer horário que tenha sido alterado ou inserido.
+                       - Uma tabela bem formatada exibindo para cada dia:
+                         * Data e Dia da Semana
+                         * **Registros Originais Informados** (as batidas submetidas pelo colaborador, ou --:--)
+                         * **Sugestão de Regularização (8h)**, destacando em **NEGRITO** qualquer batida alterada ou inserida
+                         * Total Trabalhado (08:00) e Saldo (00:00)
+                         * Status (REGULAR ou AJUSTADO)
                        - O resumo confirmando: Total Trabalhado = Total Previsto (Saldo 00:00).
                        - O link para download direto do PDF gerado (utilize o endereço exato do campo 'downloadUrl' retornado pela ferramenta, criando um link markdown como: [📥 Baixar Espelho de Ponto em PDF](URL)).
                        - Lembre o colaborador que o espelho contém campos de assinatura para ele e o gestor imediato.

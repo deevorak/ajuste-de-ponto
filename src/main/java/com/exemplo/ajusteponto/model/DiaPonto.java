@@ -15,6 +15,14 @@ public class DiaPonto {
     private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
 
     private LocalDate data;
+
+    // Registros originais informados pelo colaborador
+    private String entrada1Original;
+    private String saida1Original;
+    private String entrada2Original;
+    private String saida2Original;
+
+    // Registros ajustados/sugeridos pelo agente para cumprir o regulamento
     private RegistroBatida entrada1;
     private RegistroBatida saida1;
     private RegistroBatida entrada2;
@@ -33,6 +41,12 @@ public class DiaPonto {
         this.saida1 = saida1;
         this.entrada2 = entrada2;
         this.saida2 = saida2;
+
+        this.entrada1Original = (entrada1 != null && entrada1.getHorario() != null) ? entrada1.formatado() : "--:--";
+        this.saida1Original = (saida1 != null && saida1.getHorario() != null) ? saida1.formatado() : "--:--";
+        this.entrada2Original = (entrada2 != null && entrada2.getHorario() != null) ? entrada2.formatado() : "--:--";
+        this.saida2Original = (saida2 != null && saida2.getHorario() != null) ? saida2.formatado() : "--:--";
+
         calcularTotais();
     }
 
@@ -169,5 +183,63 @@ public class DiaPonto {
 
     public void setObservacao(String observacao) {
         this.observacao = observacao;
+    }
+
+    public String getEntrada1Original() {
+        return entrada1Original != null ? entrada1Original : "--:--";
+    }
+
+    public void setEntrada1Original(String entrada1Original) {
+        this.entrada1Original = entrada1Original;
+    }
+
+    public String getSaida1Original() {
+        return saida1Original != null ? saida1Original : "--:--";
+    }
+
+    public void setSaida1Original(String saida1Original) {
+        this.saida1Original = saida1Original;
+    }
+
+    public String getEntrada2Original() {
+        return entrada2Original != null ? entrada2Original : "--:--";
+    }
+
+    public void setEntrada2Original(String entrada2Original) {
+        this.entrada2Original = entrada2Original;
+    }
+
+    public String getSaida2Original() {
+        return saida2Original != null ? saida2Original : "--:--";
+    }
+
+    public void setSaida2Original(String saida2Original) {
+        this.saida2Original = saida2Original;
+    }
+
+    public String getOriginalFormatado() {
+        return String.format("%s  %s  %s  %s",
+                getEntrada1Original(), getSaida1Original(), getEntrada2Original(), getSaida2Original());
+    }
+
+    public String getAjustadoFormatado() {
+        return String.format("%s  %s  %s  %s",
+                entrada1 != null ? entrada1.formatado() : "--:--",
+                saida1 != null ? saida1.formatado() : "--:--",
+                entrada2 != null ? entrada2.formatado() : "--:--",
+                saida2 != null ? saida2.formatado() : "--:--");
+    }
+
+    public String getDiaSemanaCurto() {
+        if (data == null) return "";
+        return switch (data.getDayOfWeek()) {
+            case MONDAY -> "Seg";
+            case TUESDAY -> "Ter";
+            case WEDNESDAY -> "Qua";
+            case THURSDAY -> "Qui";
+            case FRIDAY -> "Sex";
+            case SATURDAY -> "Sáb";
+            case SUNDAY -> "Dom";
+        };
     }
 }

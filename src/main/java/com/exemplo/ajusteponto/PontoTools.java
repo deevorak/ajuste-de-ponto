@@ -31,17 +31,43 @@ public class PontoTools {
         ResultadoPdf resultadoPdf = pdfGenerator.gerarPdf(relatorio);
         PontoApiController.registrarPdfNoCache(relatorio.getProtocolo(), resultadoPdf.getBytes());
 
-        List<Map<String, String>> diasDetalhados = new ArrayList<>();
+        List<Map<String, Object>> diasDetalhados = new ArrayList<>();
         for (DiaPonto dia : relatorio.getDias()) {
             if (dia.isFimDeSemana()) continue;
 
-            Map<String, String> mDia = new LinkedHashMap<>();
+            Map<String, Object> mDia = new LinkedHashMap<>();
             mDia.put("data", dia.getDataFormatada());
             mDia.put("diaSemana", dia.getDiaSemana());
+            mDia.put("diaSemanaCurto", dia.getDiaSemanaCurto());
+
+            // Batidas originais informadas pelo colaborador
+            Map<String, String> orig = new LinkedHashMap<>();
+            orig.put("entrada1", dia.getEntrada1Original());
+            orig.put("saida1", dia.getSaida1Original());
+            orig.put("entrada2", dia.getEntrada2Original());
+            orig.put("saida2", dia.getSaida2Original());
+            orig.put("formatado", dia.getOriginalFormatado());
+            mDia.put("original", orig);
+
+            // Sugestão de batidas ajustadas para 8h estritas
+            Map<String, Object> sug = new LinkedHashMap<>();
+            sug.put("entrada1", dia.getEntrada1() != null ? dia.getEntrada1().formatado() : "--:--");
+            sug.put("entrada1Alterado", dia.getEntrada1() != null && dia.getEntrada1().isFoiAlterado());
+            sug.put("saida1", dia.getSaida1() != null ? dia.getSaida1().formatado() : "--:--");
+            sug.put("saida1Alterado", dia.getSaida1() != null && dia.getSaida1().isFoiAlterado());
+            sug.put("entrada2", dia.getEntrada2() != null ? dia.getEntrada2().formatado() : "--:--");
+            sug.put("entrada2Alterado", dia.getEntrada2() != null && dia.getEntrada2().isFoiAlterado());
+            sug.put("saida2", dia.getSaida2() != null ? dia.getSaida2().formatado() : "--:--");
+            sug.put("saida2Alterado", dia.getSaida2() != null && dia.getSaida2().isFoiAlterado());
+            sug.put("formatado", dia.getAjustadoFormatado());
+            mDia.put("sugerido", sug);
+
+            // Manter compatibilidade com chaves diretas
             mDia.put("entrada1", dia.getEntrada1() != null ? dia.getEntrada1().formatado() : "--:--");
             mDia.put("saida1", dia.getSaida1() != null ? dia.getSaida1().formatado() : "--:--");
             mDia.put("entrada2", dia.getEntrada2() != null ? dia.getEntrada2().formatado() : "--:--");
             mDia.put("saida2", dia.getSaida2() != null ? dia.getSaida2().formatado() : "--:--");
+
             mDia.put("totalTrabalhado", dia.getTotalTrabalhadoFormatado());
             mDia.put("saldo", dia.getSaldoDiaFormatado());
             mDia.put("status", dia.getStatus());

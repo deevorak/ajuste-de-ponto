@@ -61,11 +61,15 @@ A jornada diária é dividida em faixas flexíveis e faixas de presença obrigat
    - Identificação da Instituição: **EMPRESA PÚBLICA DE TECNOLOGIA DA INFORMAÇÃO**.
    - Subtítulo: **Divisão de Recursos Humanos - DRH | Espelho de Ponto Ajustado (Horário Flexível)**.
    - Dados do Colaborador: Nome, Matrícula, Período de Referência, Carga Horária (8h diárias / 40h semanais).
-2. **Tabela de Registros**:
-   - Colunas: `Data`, `Dia`, `Entrada 1`, `Saída Alm.`, `Ret. Alm.`, `Saída 2`, `Total`, `Saldo`, `Status`.
-   - **Horários ajustados em NEGRITO com fundo destacado**.
-   - Todos os dias trabalhados apresentam **Total: 08:00** e **Saldo: +00:00**.
+2. **Tabela Comparativa de Registros**:
+   - Cabeçalho em dois níveis com agrupamento claro:
+     * `Data` e `Dia` da semana.
+     * **REGISTRO INFORMADO (ORIGINAL)**: 4 colunas (`Ent 1`, `Saí 1`, `Ent 2`, `Saí 2`) exibindo exatamente o que o funcionário registrou (ou `--:--` quando ausente).
+     * **SUGESTÃO DE REGULARIZAÇÃO (8H)**: 4 colunas (`Ent 1`, `Saí 1`, `Ent 2`, `Saí 2`) exibindo a proposta de ajuste estrito em 8h diárias, com **todas as batidas alteradas ou incluídas destacadas em NEGRITO e fundo azul suave**.
+     * `Total Trabalhado` (**08:00**), `Saldo do Dia` (**00:00**) e `Status` (`REGULAR` ou `AJUSTADO`).
 3. **Quadro Resumo**:
    - Total Trabalhado = Total Esperado (Saldo Final: 00:00).
+   - Contador de dias com ajustes realizados.
 4. **Assinaturas**:
-   - Termo formal com campos para **Assinatura do Colaborador** e **Assinatura do Gestor Imediato**.
+   - Termo formal com declaração de ciência dos registros originais e da sugestão regularizada.
+   - Campos para **Assinatura do Colaborador** e **Assinatura do Gestor Imediato (Chefia / DRH)**.

@@ -20,22 +20,29 @@ import java.util.Base64;
 public class PdfEspelhoPontoGenerator {
 
     // Paleta de cores corporativa sóbria
-    private static final Color AZUL_INSTITUCIONAL_ESCURO = new Color(26, 54, 93);   // #1A365D
-    private static final Color AZUL_INSTITUCIONAL_MEDIO = new Color(43, 108, 176);  // #2B6CB0
+    private static final Color AZUL_INSTITUCIONAL_ESCURO = new Color(26, 54, 93);   // #1A365D (Header principal)
+    private static final Color AZUL_INSTITUCIONAL_MEDIO = new Color(30, 64, 175);  // #1E40AF (Header sugestão)
+    private static final Color CINZA_SLATE_ORIGINAL = new Color(71, 85, 105);       // #475569 (Header original)
+    private static final Color CINZA_SLATE_SUB_ORIGINAL = new Color(100, 116, 139); // #64748B (Sub-header original)
+    private static final Color AZUL_SUB_SUGESTAO = new Color(37, 99, 235);          // #2563EB (Sub-header sugestão)
     private static final Color CINZA_CABECALHO = new Color(237, 242, 247);          // #EDF2F7
     private static final Color CINZA_LINHA_PAR = new Color(248, 250, 252);          // #F8FAFC
-    private static final Color DESTAQUE_AJUSTE_BG = new Color(224, 242, 254);       // #E0F2FE
+    private static final Color FUNDO_ORIGINAL_PAR = new Color(241, 245, 249);       // #F1F5F9
+    private static final Color DESTAQUE_AJUSTE_BG = new Color(224, 242, 254);       // #E0F2FE (Azul claro destaque)
     private static final Color DESTAQUE_AJUSTE_TEXTO = new Color(15, 23, 42);       // #0F172A
 
     // Fontes
-    private static final Font FONT_TITULO = new Font(Font.HELVETICA, 13, Font.BOLD, AZUL_INSTITUCIONAL_ESCURO);
-    private static final Font FONT_SUBTITULO = new Font(Font.HELVETICA, 9, Font.BOLD, AZUL_INSTITUCIONAL_MEDIO);
-    private static final Font FONT_METADADOS_LABEL = new Font(Font.HELVETICA, 8, Font.BOLD, Color.BLACK);
-    private static final Font FONT_METADADOS_VAL = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
-    private static final Font FONT_TH = new Font(Font.HELVETICA, 8, Font.BOLD, Color.WHITE);
-    private static final Font FONT_TD_NORMAL = new Font(Font.HELVETICA, 7.5f, Font.NORMAL, Color.DARK_GRAY);
-    private static final Font FONT_TD_ALTERADO = new Font(Font.HELVETICA, 8f, Font.BOLD, DESTAQUE_AJUSTE_TEXTO);
-    private static final Font FONT_RODAPE = new Font(Font.HELVETICA, 7, Font.ITALIC, Color.GRAY);
+    private static final Font FONT_TITULO = new Font(Font.HELVETICA, 12, Font.BOLD, AZUL_INSTITUCIONAL_ESCURO);
+    private static final Font FONT_SUBTITULO = new Font(Font.HELVETICA, 8.5f, Font.BOLD, AZUL_INSTITUCIONAL_MEDIO);
+    private static final Font FONT_METADADOS_LABEL = new Font(Font.HELVETICA, 7.5f, Font.BOLD, Color.BLACK);
+    private static final Font FONT_METADADOS_VAL = new Font(Font.HELVETICA, 7.5f, Font.NORMAL, Color.DARK_GRAY);
+    private static final Font FONT_TH = new Font(Font.HELVETICA, 7.5f, Font.BOLD, Color.WHITE);
+    private static final Font FONT_SUB_TH = new Font(Font.HELVETICA, 6.5f, Font.BOLD, Color.WHITE);
+    private static final Font FONT_TD_NORMAL = new Font(Font.HELVETICA, 7f, Font.NORMAL, Color.DARK_GRAY);
+    private static final Font FONT_TD_ORIGINAL = new Font(Font.HELVETICA, 7f, Font.NORMAL, new Color(51, 65, 85));
+    private static final Font FONT_TD_ORIGINAL_VAZIO = new Font(Font.HELVETICA, 7f, Font.NORMAL, new Color(148, 163, 184));
+    private static final Font FONT_TD_ALTERADO = new Font(Font.HELVETICA, 7.5f, Font.BOLD, DESTAQUE_AJUSTE_TEXTO);
+    private static final Font FONT_RODAPE = new Font(Font.HELVETICA, 6.5f, Font.ITALIC, Color.GRAY);
 
     public static class ResultadoPdf {
         private final byte[] bytes;
@@ -135,34 +142,111 @@ public class PdfEspelhoPontoGenerator {
     }
 
     private void adicionarTabelaBatidas(Document doc, RelatorioPonto relatorio) throws DocumentException {
-        PdfPTable table = new PdfPTable(9);
+        PdfPTable table = new PdfPTable(13);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{11, 13, 11, 11, 11, 11, 10, 10, 12});
+        // Colunas: Data (10%), Dia (8.5%), Originais (4 x 6.5% = 26%), Sugestão (4 x 6.5% = 26%), Total (8%), Saldo (8%), Status (13.5%)
+        table.setWidths(new float[]{10.0f, 8.5f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 6.5f, 8.0f, 8.0f, 13.5f});
 
-        String[] cabecalhos = {
-                "Data", "Dia", "Entrada 1", "Saída Alm.", "Ret. Alm.", "Saída 2", "Total", "Saldo", "Status"
-        };
-        for (String cab : cabecalhos) {
-            PdfPCell c = new PdfPCell(new Phrase(cab, FONT_TH));
-            c.setBackgroundColor(AZUL_INSTITUCIONAL_ESCURO);
+        // LINHA 1 DE CABEÇALHO (Agrupamento de Colunas)
+        PdfPCell cData = new PdfPCell(new Phrase("Data", FONT_TH));
+        cData.setRowspan(2);
+        cData.setBackgroundColor(AZUL_INSTITUCIONAL_ESCURO);
+        cData.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cData.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cData.setPadding(3);
+        table.addCell(cData);
+
+        PdfPCell cDia = new PdfPCell(new Phrase("Dia", FONT_TH));
+        cDia.setRowspan(2);
+        cDia.setBackgroundColor(AZUL_INSTITUCIONAL_ESCURO);
+        cDia.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cDia.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cDia.setPadding(3);
+        table.addCell(cDia);
+
+        PdfPCell cGrupoOrig = new PdfPCell(new Phrase("REGISTRO INFORMADO (ORIGINAL)", FONT_TH));
+        cGrupoOrig.setColspan(4);
+        cGrupoOrig.setBackgroundColor(CINZA_SLATE_ORIGINAL);
+        cGrupoOrig.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cGrupoOrig.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cGrupoOrig.setPadding(3);
+        table.addCell(cGrupoOrig);
+
+        PdfPCell cGrupoAjust = new PdfPCell(new Phrase("SUGESTÃO DE REGULARIZAÇÃO (8H)", FONT_TH));
+        cGrupoAjust.setColspan(4);
+        cGrupoAjust.setBackgroundColor(AZUL_INSTITUCIONAL_MEDIO);
+        cGrupoAjust.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cGrupoAjust.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cGrupoAjust.setPadding(3);
+        table.addCell(cGrupoAjust);
+
+        PdfPCell cTotal = new PdfPCell(new Phrase("Total", FONT_TH));
+        cTotal.setRowspan(2);
+        cTotal.setBackgroundColor(AZUL_INSTITUCIONAL_ESCURO);
+        cTotal.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cTotal.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cTotal.setPadding(3);
+        table.addCell(cTotal);
+
+        PdfPCell cSaldo = new PdfPCell(new Phrase("Saldo", FONT_TH));
+        cSaldo.setRowspan(2);
+        cSaldo.setBackgroundColor(AZUL_INSTITUCIONAL_ESCURO);
+        cSaldo.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cSaldo.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cSaldo.setPadding(3);
+        table.addCell(cSaldo);
+
+        PdfPCell cStatus = new PdfPCell(new Phrase("Status", FONT_TH));
+        cStatus.setRowspan(2);
+        cStatus.setBackgroundColor(AZUL_INSTITUCIONAL_ESCURO);
+        cStatus.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cStatus.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cStatus.setPadding(3);
+        table.addCell(cStatus);
+
+        // LINHA 2 DE CABEÇALHO (Sub-colunas de Horários)
+        String[] subOrig = {"Ent 1", "Saí 1", "Ent 2", "Saí 2"};
+        for (String sub : subOrig) {
+            PdfPCell c = new PdfPCell(new Phrase(sub, FONT_SUB_TH));
+            c.setBackgroundColor(CINZA_SLATE_SUB_ORIGINAL);
             c.setHorizontalAlignment(Element.ALIGN_CENTER);
             c.setVerticalAlignment(Element.ALIGN_MIDDLE);
-            c.setPadding(5);
+            c.setPadding(2.5f);
             table.addCell(c);
         }
 
+        String[] subAjust = {"Ent 1", "Saí 1", "Ent 2", "Saí 2"};
+        for (String sub : subAjust) {
+            PdfPCell c = new PdfPCell(new Phrase(sub, FONT_SUB_TH));
+            c.setBackgroundColor(AZUL_SUB_SUGESTAO);
+            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            c.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            c.setPadding(2.5f);
+            table.addCell(c);
+        }
+
+        // LINHAS DE DADOS
         boolean linhaPar = false;
         for (DiaPonto dia : relatorio.getDias()) {
             Color corFundo = dia.isFimDeSemana() ? new Color(241, 245, 249) : (linhaPar ? CINZA_LINHA_PAR : Color.WHITE);
+            Color corFundoOrig = dia.isFimDeSemana() ? new Color(241, 245, 249) : (linhaPar ? FUNDO_ORIGINAL_PAR : new Color(248, 250, 252));
 
             adicionarCelulaDado(table, dia.getDataFormatada(), FONT_TD_NORMAL, corFundo, Element.ALIGN_CENTER);
-            adicionarCelulaDado(table, dia.getDiaSemana(), FONT_TD_NORMAL, corFundo, Element.ALIGN_LEFT);
+            adicionarCelulaDado(table, dia.getDiaSemanaCurto(), FONT_TD_NORMAL, corFundo, Element.ALIGN_CENTER);
 
+            // 4 Colunas dos registros originais
+            adicionarCelulaOriginal(table, dia.getEntrada1Original(), corFundoOrig);
+            adicionarCelulaOriginal(table, dia.getSaida1Original(), corFundoOrig);
+            adicionarCelulaOriginal(table, dia.getEntrada2Original(), corFundoOrig);
+            adicionarCelulaOriginal(table, dia.getSaida2Original(), corFundoOrig);
+
+            // 4 Colunas da sugestão ajustada
             adicionarCelulaBatida(table, dia.getEntrada1(), corFundo);
             adicionarCelulaBatida(table, dia.getSaida1(), corFundo);
             adicionarCelulaBatida(table, dia.getEntrada2(), corFundo);
             adicionarCelulaBatida(table, dia.getSaida2(), corFundo);
 
+            // Total, Saldo e Status
             adicionarCelulaDado(table, dia.getTotalTrabalhadoFormatado(), FONT_TD_NORMAL, corFundo, Element.ALIGN_CENTER);
             adicionarCelulaDado(table, dia.getSaldoDiaFormatado(), FONT_TD_NORMAL, corFundo, Element.ALIGN_CENTER);
 
@@ -174,10 +258,20 @@ public class PdfEspelhoPontoGenerator {
 
         doc.add(table);
 
-        Paragraph legenda = new Paragraph("* Horários em NEGRITO com fundo destacado indicam ajustes ou inclusões efetuadas automaticamente conforme o regulamento de horário flexível.", FONT_RODAPE);
+        Paragraph legenda = new Paragraph(
+                "* REGISTRO INFORMADO (ORIGINAL): Batidas originais submetidas pelo colaborador (--:-- indica ausência de marcação).\n" +
+                "* SUGESTÃO DE REGULARIZAÇÃO (8H): Horários ajustados para cumprimento estrito de 8h diárias (sem horas extras). " +
+                "Batidas alteradas/incluídas destacadas em NEGRITO e fundo azul.",
+                FONT_RODAPE);
         legenda.setSpacingBefore(4);
         legenda.setSpacingAfter(8);
         doc.add(legenda);
+    }
+
+    private void adicionarCelulaOriginal(PdfPTable table, String hora, Color fundo) {
+        boolean vazio = hora == null || hora.isBlank() || hora.equals("--:--");
+        Font font = vazio ? FONT_TD_ORIGINAL_VAZIO : FONT_TD_ORIGINAL;
+        adicionarCelulaDado(table, hora, font, fundo, Element.ALIGN_CENTER);
     }
 
     private void adicionarCelulaBatida(PdfPTable table, RegistroBatida batida, Color corPadrao) {
@@ -239,11 +333,11 @@ public class PdfEspelhoPontoGenerator {
 
     private void adicionarBlocoAssinaturas(Document doc) throws DocumentException {
         Paragraph termo = new Paragraph(
-                "Declaro para os devidos fins que os horários ajustados acima foram regularizados em conformidade " +
-                        "com o Regulamento de Horário Flexível vigente (Divisão de Recursos Humanos - DRH).",
+                "Declaro para os devidos fins que conferi os registros originais informados e estou ciente da proposta de regularização " +
+                        "de jornada acima descrita, confirmando a adequação aos limites do Regulamento de Horário Flexível vigente (DRH).",
                 new Font(Font.HELVETICA, 7.5f, Font.ITALIC, Color.DARK_GRAY));
         termo.setAlignment(Element.ALIGN_JUSTIFIED);
-        termo.setSpacingAfter(20);
+        termo.setSpacingAfter(18);
         doc.add(termo);
 
         PdfPTable assinaturas = new PdfPTable(2);
